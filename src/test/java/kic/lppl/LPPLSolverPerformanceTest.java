@@ -8,8 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import static kic.lppl.LPPLSolver.*;
 import static kic.lppl.Doubles.*;
 import static kic.lppl.DATA.*;
@@ -20,9 +18,10 @@ public class LPPLSolverPerformanceTest {
 
     @BeforeClass
     public static void setUpSolver() throws SolverException {
-         sornetteSolver = new LPPLSolver(toFloats(time), toFloats(price), price, DEFAULT_M, DEFAULT_W, null);
-         // warm up the solver
-         sornetteSolver.solve();
+        // do not start to close ...
+        sornetteSolver = new LPPLSolver(toFloats(time), toFloats(price), price, 0.2, DEFAULT_W, null, null);
+        // warm up the solver
+        sornetteSolver.solve();
     }
 
     @Rule
@@ -33,7 +32,7 @@ public class LPPLSolverPerformanceTest {
     public void fit() throws Exception {
         sornetteSolver = sornetteSolver.withNewTarget(toFloats(time), toFloats(price), price, false);
         double[] mwtc = sornetteSolver.solve();
-        assertArrayEquals(new double[]{0.4958619268678643, 8.68047623376235, 416882.0}, mwtc, 0.0001);
+        assertArrayEquals(new double[]{0.5376815158637659, 8.935918225558547, 416887.0}, mwtc, 0.0001);
     }
 
     @AfterClass

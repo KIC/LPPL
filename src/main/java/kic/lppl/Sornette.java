@@ -23,7 +23,7 @@ public class Sornette {
      * @throws SolverException
      */
     public static double[] fit(double[] time, double[] prices, double initGuessedM, double initGuessedW, double initGuessedTC) throws SolverException {
-        LPPLSolver sornetteSolver = new LPPLSolver(toFloats(time), toFloats(prices), prices, initGuessedM, initGuessedW, initGuessedTC);
+        LPPLSolver sornetteSolver = new LPPLSolver(toFloats(time), toFloats(prices), prices, initGuessedM, initGuessedW, initGuessedTC, null);
         return sornetteSolver.solve();
     }
 

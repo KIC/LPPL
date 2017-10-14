@@ -7,34 +7,37 @@ import net.finmath.optimizer.SolverException;
 import java.util.Arrays;
 
 import static org.apache.commons.math3.util.FastMath.round;
+import static kic.lppl.Doubles.*;
+import static kic.lppl.Floats.*;
 
-// FIXME change LevenbergMarquardt to work with floats by overriding the setDerivatives function
-// FIXME make this solver resuable so we compile the kernels only once
 // TODO we could theoretically constrain the parametrs m, w by returning Doble.NaN i.e. for 0.1 ≤ m ≤ 0.9 and 6 ≤ ω ≤ 13,
 public class LPPLSolver extends LevenbergMarquardt {
-    public static final double PARAMETER_DIFFERENTIATOR = 1E-8;
+    public static final double DEFAULT_PARAMETER_DIFFERENTIATOR = 1E-7;
     public static final double DEFAULT_M = 0.5;
     public static final double DEFAULT_W = 9;
     private final LPPLKernel lpplKernel;
     private final ABCCSolver abccSolver;
     private final Range range;
+    private final double dFact;
 
-    public LPPLSolver(float[] time, float[] price, double[] priceD, double initGuessedM, double initGuessedW, Double initGuessedTC) {
+    public LPPLSolver(float[] time, float[] price, double[] priceD, double initGuessedM, double initGuessedW, Double initGuessedTC, Double diffrentationFactor) {
         this(new ABCCSolver(time, price),
              new LPPLKernel(time),
-             JavaDevice.THREAD_POOL.createRange(time.length),
+             Range.create(time.length),
              priceD,
              initGuessedM,
              initGuessedW,
-             initGuessedTC != null ? initGuessedTC : time[time.length - 1] + 1d);
+             initGuessedTC != null ? initGuessedTC : time[time.length - 1] + 1d,
+             diffrentationFactor != null ? diffrentationFactor : DEFAULT_PARAMETER_DIFFERENTIATOR);
     }
 
     // float[] time, float[] price,
-    private LPPLSolver(ABCCSolver abccSolver, LPPLKernel lpplKernel, Range range, double[] priceD, double initGuessedM, double initGuessedW, double initGuessedTC) {
+    private LPPLSolver(ABCCSolver abccSolver, LPPLKernel lpplKernel, Range range, double[] priceD, double initGuessedM, double initGuessedW, double initGuessedTC, double diffrentationFactor) {
         super(1);
         this.abccSolver = abccSolver;
         this.lpplKernel = lpplKernel;
         this.range = range;
+        this.dFact = diffrentationFactor;
         this.setMaxIteration(2000);
         this.setErrorTolerance(0.01d);
 
@@ -57,11 +60,12 @@ public class LPPLSolver extends LevenbergMarquardt {
 
         return new LPPLSolver(abccSolver,
                               lpplKernel,
-                              JavaDevice.THREAD_POOL.createRange(time.length),
+                              Range.create(time.length),
                               priceD,
                               useLastParamsAsInitialGuess ? getBestFitParameters()[0] : DEFAULT_M,
                               useLastParamsAsInitialGuess ? getBestFitParameters()[1] : DEFAULT_W,
-                              newTcGuess);
+                              newTcGuess,
+                              dFact);
     }
 
     @Override
@@ -71,11 +75,11 @@ public class LPPLSolver extends LevenbergMarquardt {
         double tc = parameters[2];
         double[] abcc = this.abccSolver.solve((float) tc, (float) m, (float) w);
 
-        lpplKernel.setAbccMwtc(abcc, parameters);
+        lpplKernel.setAbccMwtc(toFloats(abcc), toFloats(parameters));
         lpplKernel.execute(range);
-        System.arraycopy(lpplKernel.getValues(), 0, values, 0, values.length);
+        copyToDouble(lpplKernel.getValues(), values);
 
-        setParameterSteps(Arrays.stream(parameters).map(p -> (Math.abs(p) + 1) * PARAMETER_DIFFERENTIATOR).toArray());
+        setParameterSteps(Arrays.stream(parameters).map(p -> (Math.abs(p) + 1) * dFact).toArray());
     }
 
     double[] solve() throws SolverException {
