@@ -1,26 +1,29 @@
 package kic.lppl;
 
 import com.aparapi.Kernel;
-import com.aparapi.Range;
-
-import java.util.Arrays;
 
 public class ABCCKernel extends Kernel {
     public static final int FI = 0, GI = 1, HI = 2, YI = 3, FI2 = 4, FIGI = 5, GI2 = 6, YIFI = 7, YIGI = 8, FIHI = 9, GIHI = 10, HI2 = 11, YIHI = 12;
     public static final int v = 13;
     private static final int TC = 0, M = 1, W = 2;
-    private final float[] T, p;
+    private float[] T, p;
     private float[] tcmw = new float[3];
-    final float[] result;
-    public final int N;
+    private float[] result;
+    //public final int N;
 
     public ABCCKernel(float[] t, float[] p) {
         setExplicit(true);
         this.T = t;
         this.p = p;
-        this.N = p.length;
-        this.result = new float[N * v];
-        put(this.T).put(this.p);
+        this.result = new float[t.length * v];
+        put(this.T).put(this.p).put(result);
+    }
+
+    public void setNewTandP(float[] t, float[] p) {
+        this.T = t;
+        this.p = p;
+        this.result = new float[t.length * v];
+        put(this.T).put(this.p).put(result);
     }
 
     public void set_tcmw(float tc, float m, float w) {
@@ -52,4 +55,8 @@ public class ABCCKernel extends Kernel {
         result[yihi] = result[yi] * result[hi];
     }
 
+    public float[] getResult() {
+        get(result);
+        return result;
+    }
 }

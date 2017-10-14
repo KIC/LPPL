@@ -32,10 +32,10 @@ public class ABCCKernelTest {
     @PerfTest(invocations = 100, threads = 1)
     public void run() throws Exception {
         kernel.set_tcmw(1002f, r.nextFloat(), 9f);
-        kernel.execute(Range.create(kernel.N));
-        kernel.get(kernel.result);
-        assertFalse(lastValue.get() == kernel.result[0]);
-        lastValue.set(kernel.result[0]);
+        kernel.execute(Range.create(time.length));
+        float[] result = kernel.getResult();
+        assertFalse(lastValue.get() == result[0]);
+        lastValue.set(result[0]);
     }
 
     @AfterClass

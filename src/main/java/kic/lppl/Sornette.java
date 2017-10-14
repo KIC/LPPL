@@ -1,10 +1,11 @@
 package kic.lppl;
 
 import net.finmath.optimizer.SolverException;
+import static kic.lppl.Doubles.*;
 
+// FIXME this shoule become some sort of builder to run multiple LPPL's and count the quantiles
 public class Sornette {
-    public static final double DEFAULT_M = 0.5;
-    public static final double DEFAULT_W = 9;
+
     // defaults = time[time.length - 1] + 1d}
 
     /**
@@ -26,9 +27,4 @@ public class Sornette {
         return sornetteSolver.solve();
     }
 
-    private static float[] toFloats(double[] doubles) {
-        float[] res = new float[doubles.length];
-        for (int i=0; i<res.length; i++) res[i] = (float) doubles[i];
-        return res;
-    }
 }

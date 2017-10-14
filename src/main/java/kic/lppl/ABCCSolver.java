@@ -12,27 +12,33 @@ import static kic.lppl.ABCCKernel.*;
 
 public class ABCCSolver {
     private final ABCCKernel kernel;
+    private int N;
 
     public ABCCSolver(float[] time, float[] price) {
         this.kernel = new ABCCKernel(time, price);
+        this.N = time.length;
+    }
+
+    public void setNewTimeAndPrice(float[] time, float[] price) {
+        kernel.setNewTandP(time, price);
+        N = time.length;
     }
 
     public double[] solve(float tc, float m, float w) {
-        return solve(tc, m, w, Range.create(kernel.N));
+        return solve(tc, m, w, Range.create(N));
     }
 
     public double[] solve(float tc, float m, float w, Device device) {
-        return solve(tc, m, w, device.createRange(kernel.N));
+        return solve(tc, m, w, device.createRange(N));
     }
 
     private double[] solve(float tc, float m, float w, Range range) {
         kernel.set_tcmw(tc, m, w);
         kernel.execute(range);
-        kernel.get(kernel.result);
-        final float[] result = kernel.result;
+        final float[] result = kernel.getResult();
         double[][] _A = new double[4][4];
         double[] _b = new double[4];
-        _A[0][0] = kernel.N;
+        _A[0][0] = N;
 
         /*
           A = [[ N,           result[fi],    result[gi],    result[hi]   ],
@@ -41,7 +47,7 @@ public class ABCCSolver {
                [ result[hi],  result[fihi],  result[gihi],  result[hi2]  ]]
           b =  [ sum_yi,      sum_yi_fi,     sum_yi_gi,     sum_yi_hi ]
        */
-        for (int i = 0; i < kernel.N; i++) {
+        for (int i = 0; i < N; i++) {
             int offset = i * v;
             _A[0][1] += result[offset + FI];
             _A[0][2] += result[offset + GI];
