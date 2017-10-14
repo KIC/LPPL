@@ -1,7 +1,6 @@
 package kic.lppl;
 
 import com.aparapi.Range;
-import com.aparapi.device.JavaDevice;
 import net.finmath.optimizer.LevenbergMarquardt;
 import net.finmath.optimizer.SolverException;
 import java.util.Arrays;
