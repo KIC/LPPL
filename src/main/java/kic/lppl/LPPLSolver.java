@@ -6,12 +6,13 @@ import net.finmath.optimizer.LevenbergMarquardt;
 import net.finmath.optimizer.SolverException;
 import java.util.Arrays;
 
-import static org.apache.commons.math3.util.FastMath.*;
+import static org.apache.commons.math3.util.FastMath.round;
 
 // FIXME change LevenbergMarquardt to work with floats by overriding the setDerivatives function
 // FIXME make this solver resuable so we compile the kernels only once
 // TODO we could theoretically constrain the parametrs m, w by returning Doble.NaN i.e. for 0.1 ≤ m ≤ 0.9 and 6 ≤ ω ≤ 13,
 public class LPPLSolver extends LevenbergMarquardt {
+    public static final double PARAMETER_DIFFERENTIATOR = 1E-8;
     public static final double DEFAULT_M = 0.5;
     public static final double DEFAULT_W = 9;
     private final LPPLKernel lpplKernel;
@@ -73,6 +74,8 @@ public class LPPLSolver extends LevenbergMarquardt {
         lpplKernel.setAbccMwtc(abcc, parameters);
         lpplKernel.execute(range);
         System.arraycopy(lpplKernel.getValues(), 0, values, 0, values.length);
+
+        setParameterSteps(Arrays.stream(parameters).map(p -> (Math.abs(p) + 1) * PARAMETER_DIFFERENTIATOR).toArray());
     }
 
     double[] solve() throws SolverException {
