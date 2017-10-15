@@ -10,7 +10,8 @@ import static kic.lppl.Doubles.*;
 import static kic.lppl.Floats.*;
 
 // TODO we could theoretically constrain the parametrs m, w by returning Doble.NaN i.e. for 0.1 ≤ m ≤ 0.9 and 6 ≤ ω ≤ 13,
-public class LPPLSolver extends LevenbergMarquardt {
+public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
+    public static final int M = 0, W = 1, TC = 2;
     public static final double DEFAULT_PARAMETER_DIFFERENTIATOR = 1E-7;
     public static final double DEFAULT_M = 0.5;
     public static final double DEFAULT_W = 9;
@@ -81,13 +82,18 @@ public class LPPLSolver extends LevenbergMarquardt {
         setParameterSteps(Arrays.stream(parameters).map(p -> (Math.abs(p) + 1) * dFact).toArray());
     }
 
-    double[] solve() throws SolverException {
-        run();
-        double[] solution = getBestFitParameters();
-        solution[2] = round(solution[2]);
-        return solution;
+    double[] solve() {
+        try {
+            run();
+            double[] solution = getBestFitParameters();
+            solution[2] = round(solution[2]);
+            return solution;
+        } catch (SolverException se) {
+            throw new IllegalStateException(se);
+        }
     }
 
+    @Override
     public void shutDown() {
         abccSolver.dispose();
         lpplKernel.dispose();
