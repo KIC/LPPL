@@ -1,34 +1,27 @@
 package kic.lppl;
 
-import kic.pool.ResourcePool;
 import kic.pool.ShutdownableResourcePool;
 import net.finmath.optimizer.SolverException;
-
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import java.util.stream.IntStream;
+
 import static java.util.stream.Collectors.*;
 import static kic.lppl.Doubles.*;
 import static kic.lppl.LPPLSolver.*;
 
-// FIXME this shoule become some sort of builder to run multiple LPPL's and count the quantiles
+
 public class Sornette {
 
     /**
      * Use this Method do just make one single fit of the Log Periodic Power Law of the form:
      *   A + B * a + C1 * a * cos(w * log(tc - t)) + C2 * a * sin(w * log(tc - t))
      *
-     * @param time  an array of decimal time. The timestap format is perfectly linear, so to use i.e. hours just do
+     * @param time  an array of decimal time. The timestamp format is perfectly linear, so to use i.e. hours just do
      *              timestamp / 1000 / 60 / 60 and to convert back use tc * 60 * 60 * 1000
      * @param prices    an array of prices, from the book it should actually be the log of each price
      * @return an array of doubles with the parameters [m, w, tc] we pay specifically attention on the tc parameter
@@ -46,7 +39,7 @@ public class Sornette {
     /**
      * Make a fit on a single window with a number of smaller subwindwos. The Data has to be sorted in ASC order.
      *
-     * @param time  an array of decimal time. The timestap format is perfectly linear, so to use i.e. hours just do
+     * @param time  an array of decimal time. The timestamp format is perfectly linear, so to use i.e. hours just do
      *              timestamp / 1000 / 60 / 60 and to convert back use tc * 60 * 60 * 1000
      * @param prices    an array of prices, from the book it should actually be the log of each price
      * @param shrinkWindowBy    nr of datapoints each subwindow is smaller then the previous one
@@ -54,9 +47,9 @@ public class Sornette {
      * @param nrOfSolvers       nr of openCL solvers, this parameter depends on the memory size of you GPUs
      * @param service           optionally one could pass an executor service by default we create our own threadpool
      *                          like so: Executors.newFixedThreadPool(nrOfSolvers);
-     * @return sornette crash indicator returns the number of esitmated TCs (time of crash). We can expect the TCs
-     *                                  form some kind of distribution where one can read how likely a cange of regime
-     *                                  is at a given time
+     * @return sornette crash indicator returns the number of estimated TCs (time of crash). We can expect the TCs to
+     *                                  form some kind of distribution where one can read how likely a change of regime
+     *                                  is at a given time.
      * @throws SolverException
      * @throws InterruptedException
      */
@@ -115,7 +108,16 @@ public class Sornette {
         return null;
     }
 
-    protected static LPPLSolver newDefaultSolver(double[] time, double[] prices) {
+    /**
+     * Returns a plain LPPL solver for the objective:
+     *      A + B * a + C1 * a * cos(w * log(tc - t)) + C2 * a * sin(w * log(tc - t))
+     *
+     * @param time  an array of decimal time. The timestamp format is perfectly linear, so to use i.e. hours just do
+     *              timestamp / 1000 / 60 / 60 and to convert back use tc * 60 * 60 * 1000
+     * @param prices    an array of prices, from the book it should actually be the log of each price
+     * @return an instance of a Log Periodic Power Law Solver.
+     */
+    public static LPPLSolver newDefaultSolver(double[] time, double[] prices) {
         return new LPPLSolver(toFloats(time),
                               toFloats(prices),
                               prices,
