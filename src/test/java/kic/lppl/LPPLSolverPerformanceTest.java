@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import static kic.lppl.LPPLSolver.*;
 import static kic.lppl.Doubles.*;
-import static kic.lppl.DATA.*;
+import static kic.DATA.*;
 import static org.junit.Assert.*;
 
 public class LPPLSolverPerformanceTest {

@@ -1,4 +1,4 @@
-package kic.lppl;
+package kic.pool;
 
 public interface Shutdownable {
     void shutDown();

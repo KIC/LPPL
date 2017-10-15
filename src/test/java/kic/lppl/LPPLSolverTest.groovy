@@ -4,7 +4,7 @@ import spock.lang.Specification
 
 import static kic.lppl.LPPLSolver.*
 import static kic.lppl.Doubles.*
-import static kic.lppl.DATA.*
+import static kic.DATA.*
 import static spock.util.matcher.HamcrestMatchers.*
 
 class LPPLSolverTest extends Specification {

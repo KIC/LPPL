@@ -1,7 +1,5 @@
 package kic.pool;
 
-import kic.lppl.Shutdownable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
