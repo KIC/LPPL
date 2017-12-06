@@ -118,8 +118,7 @@ public class Sornette {
      * @return an instance of a Log Periodic Power Law Solver.
      */
     public static LPPLSolver newDefaultSolver(double[] time, double[] prices) {
-        return new LPPLSolver(toFloats(time),
-                              toFloats(prices),
+        return new LPPLSolver(time,
                               prices,
                               DEFAULT_M,
                               DEFAULT_W,

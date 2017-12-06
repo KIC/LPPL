@@ -1,19 +1,17 @@
 package kic.lppl
 
-import kic.DATA
 import spock.lang.Specification
+import static kic.DATA.*
 
 class SornetteTest extends Specification {
     def "test fit"() {
         given:
-        def time = DATA.time
-        def prices = DATA.price
         def shrinkWindowBy = 2
         def nrOfShrinks = 20
         def nrOfSovlers = 10
 
         when:
-        def solution = Sornette.fit(time, prices, shrinkWindowBy, nrOfShrinks, nrOfSovlers, null);
+        def solution = Sornette.fit(time, price, shrinkWindowBy, nrOfShrinks, nrOfSovlers, null);
 
         then:
         println(solution)

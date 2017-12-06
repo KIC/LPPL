@@ -6,7 +6,7 @@ import net.finmath.optimizer.LevenbergMarquardt;
 import net.finmath.optimizer.SolverException;
 import java.util.Arrays;
 
-import static org.apache.commons.math3.util.FastMath.round;
+import static org.apache.commons.math3.util.FastMath.*;
 import static kic.lppl.Doubles.*;
 import static kic.lppl.Floats.*;
 
@@ -21,6 +21,10 @@ public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
     private final Range range;
     private final double dFact;
 
+    public LPPLSolver(double[] time, double[] price, double initGuessedM, double initGuessedW, Double initGuessedTC, Double diffrentationFactor) {
+        this(toFloats(time), toFloats(price), price, initGuessedM, initGuessedW, initGuessedTC, diffrentationFactor);
+    }
+
     public LPPLSolver(float[] time, float[] price, double[] priceD, double initGuessedM, double initGuessedW, Double initGuessedTC, Double diffrentationFactor) {
         this(new ABCCSolver(time, price),
              new LPPLKernel(time),
@@ -28,7 +32,7 @@ public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
              priceD,
              initGuessedM,
              initGuessedW,
-             initGuessedTC != null ? initGuessedTC : time[time.length - 1] + 1d,
+             initGuessedTC != null ? initGuessedTC : time.length > 0 ? time[time.length - 1] + 1d : 0d,
              diffrentationFactor != null ? diffrentationFactor : DEFAULT_PARAMETER_DIFFERENTIATOR);
     }
 
@@ -50,12 +54,17 @@ public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
         this.setTargetValues(priceD);
     }
 
+    public LPPLSolver withNewTarget(double[] time, double[] price, boolean useLastParamsAsInitialGuess) {
+        return withNewTarget(toFloats(time), toFloats(price), price, useLastParamsAsInitialGuess);
+    }
+
     public LPPLSolver withNewTarget(float[] time, float[] price, double[] priceD, boolean useLastParamsAsInitialGuess) {
         // since the LevenbergMarquardt solver can not bew reused once it has been run, we need to make a copy
         // while keeping all the kernels
         abccSolver.setNewTimeAndPrice(time, price);
         lpplKernel.setNewTime(time);
-        double newTcGuess = useLastParamsAsInitialGuess
+        boolean reuseParameters = useLastParamsAsInitialGuess && getBestFitParameters() != null;
+        double newTcGuess = reuseParameters
                 ? Math.max(time[time.length - 1] + 1d, getBestFitParameters()[2])
                 : time[time.length - 1] + 1d;
 
@@ -63,8 +72,8 @@ public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
                               lpplKernel,
                               Range.create(time.length),
                               priceD,
-                              useLastParamsAsInitialGuess ? getBestFitParameters()[0] : DEFAULT_M,
-                              useLastParamsAsInitialGuess ? getBestFitParameters()[1] : DEFAULT_W,
+                              reuseParameters ? getBestFitParameters()[0] : DEFAULT_M,
+                              reuseParameters ? getBestFitParameters()[1] : DEFAULT_W,
                               newTcGuess,
                               dFact);
     }
@@ -87,11 +96,28 @@ public class LPPLSolver extends LevenbergMarquardt implements Shutdownable {
         try {
             run();
             double[] solution = getBestFitParameters();
-            solution[2] = round(solution[2]);
-            return solution;
+            double[] abcc = this.abccSolver.solve((float) solution[2], (float) solution[0], (float) solution[1]);
+            return new double[]{solution[0], solution[1], round(solution[2]), abcc[0], abcc[1], abcc[2], abcc[3]};
         } catch (SolverException se) {
             throw new IllegalStateException(se);
         }
+    }
+
+    public static double[][] reconstructOszillator(double[] time, double[] mwtcabcc) {
+        int lastTimeIdx = time.length - 1;
+        int step = (int) max(1, floor((time[lastTimeIdx] - time[0]) / time.length));
+        int extensions = (int) floor((mwtcabcc[2] - time[lastTimeIdx]) / step);
+        double[][] resTimeLppl = new double[time.length + extensions][2];
+
+        for (int i = 0; i < resTimeLppl.length; i++) {
+            double t = i < time.length ? time[i] : time[lastTimeIdx] + step * (time.length - i + 1);
+            double tc_t = mwtcabcc[2] - t;
+            double a = pow((tc_t), mwtcabcc[0]);
+            resTimeLppl[i][0] = t;
+            resTimeLppl[i][1] = mwtcabcc[3] + mwtcabcc[4] * a + mwtcabcc[5] * a * cos(mwtcabcc[1] * log(tc_t)) + mwtcabcc[6] * a * sin(mwtcabcc[1] * log(tc_t));
+        }
+
+        return resTimeLppl;
     }
 
     @Override
